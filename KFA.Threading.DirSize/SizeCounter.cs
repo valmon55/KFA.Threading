@@ -28,12 +28,19 @@
         {      
             size += fi.Length;    
         }
-        
+
         // Суммируем размер директорий
-        DirectoryInfo[] dis = d.GetDirectories();
-        foreach (DirectoryInfo di in dis) 
+        try
         {
-            size += DirSize(di);   
+            DirectoryInfo[] dis = d.GetDirectories();
+            foreach (DirectoryInfo di in dis)
+            {
+                size += DirSize(di);
+            }
+        }
+        catch(Exception ex) 
+        { 
+            Console.WriteLine(d.FullName + ":" + ex.ToString());
         }
         return size;  
     }
