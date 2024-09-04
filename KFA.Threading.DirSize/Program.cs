@@ -1,28 +1,48 @@
 ﻿using System.Reflection;
+using System.Text;
 
 namespace KFA.Threading.DirSize
 {
     internal class Program
     {
+        private static string SizeInfo;
+
         static void Main(string[] args)
         {
-            Console.WriteLine("Выполняется");
+            Console.OutputEncoding = Encoding.Unicode;
 
-            new Thread(() => 
-            {
-                Console.WriteLine(".");
-                Thread.Sleep(1000);
+            // Получаем путь к текущей директории
+            var currentDir = Directory.GetCurrentDirectory();
 
-            }).Start();
-            
-            new Thread(() => 
+            // Создание и запуск потока с помощью ParametherizedThreadStart
+            var sizeCounterThread = new Thread(CountSize);
+            sizeCounterThread.Start(currentDir);
+
+            Console.Write($"Выполняется");
+
+            // Пока наш поток выполняет работу по сканированию файлов - показываем пользователю простейшую визуализацию в консоли
+            // Этот цикл также не даст основному потоку завершиться раньше времени
+            while (sizeCounterThread.IsAlive)
             {
-                var progDir = Environment.CurrentDirectory;
-                var dirSize = SizeCounter.GetDirSize(progDir);
-                Console.WriteLine($"Выполнено{Environment.NewLine}");
-                Console.WriteLine($"Папка {progDir} занимает {dirSize} на диске");
+                Console.Write(".");
+                Thread.Sleep(100);
             }
-            ).Start();
+
+            Console.WriteLine($"Выполнено");
+
+            // Как только второй поток закончил свою работу - он получает флаг IsAlive = false,
+            // а основной поток выпадает из цикла и готов сообщить пользователю результат работы дополнительного
+            Console.WriteLine($"Папка {currentDir} занимает {SizeInfo} на диске");
+            Console.Read();
+        }
+
+        /// <summary>
+        /// Вызов метода для подсчета размера директории с файлами
+        /// </summary>
+        static void CountSize(object? dir)
+        {
+            if (dir != null)
+                SizeInfo = SizeCounter.GetDirSize((string)dir);
         }
     }
 }
